@@ -49,7 +49,25 @@ export function convertAnthropicToGoogle(anthropicRequest) {
 
     const googleRequest = {
         contents: [],
-        generationConfig: {}
+        generationConfig: {},
+        safetySettings: [
+            {
+                category: "HARM_CATEGORY_HARASSMENT",
+                threshold: "BLOCK_NONE"
+            },
+            {
+                category: "HARM_CATEGORY_HATE_SPEECH",
+                threshold: "BLOCK_NONE"
+            },
+            {
+                category: "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+                threshold: "BLOCK_NONE"
+            },
+            {
+                category: "HARM_CATEGORY_DANGEROUS_CONTENT",
+                threshold: "BLOCK_NONE"
+            }
+        ]
     };
 
     // Handle system instruction
@@ -233,7 +251,10 @@ export function convertAnthropicToGoogle(anthropicRequest) {
             };
         });
 
-        googleRequest.tools = [{ functionDeclarations }];
+        if (!googleRequest.tools) {
+            googleRequest.tools = [];
+        }
+        googleRequest.tools.push({ functionDeclarations });
         logger.debug(`[RequestConverter] Tools: ${JSON.stringify(googleRequest.tools).substring(0, 300)}`);
 
         // For Claude models, set functionCallingConfig.mode = "VALIDATED"
@@ -246,6 +267,13 @@ export function convertAnthropicToGoogle(anthropicRequest) {
             };
         }
     }
+
+    // Unconditionally add Google Search and URL Context grounding tools
+    if (!googleRequest.tools) {
+        googleRequest.tools = [];
+    }
+    googleRequest.tools.push({ googleSearch: {} });
+    googleRequest.tools.push({ urlContext: {} });
 
     // Cap max tokens for Gemini models
     if (isGeminiModel && googleRequest.generationConfig.maxOutputTokens > GEMINI_MAX_OUTPUT_TOKENS) {
