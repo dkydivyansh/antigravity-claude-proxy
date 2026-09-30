@@ -718,6 +718,7 @@ app.post('/v1/messages', async (req, res) => {
             tools,
             tool_choice,
             thinking,
+            disable_thinking,
             top_p,
             top_k,
             temperature
@@ -779,6 +780,7 @@ app.post('/v1/messages', async (req, res) => {
             tools,
             tool_choice,
             thinking,
+            disable_thinking,
             top_p,
             top_k,
             temperature

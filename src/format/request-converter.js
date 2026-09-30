@@ -40,12 +40,12 @@ export function convertAnthropicToGoogle(anthropicRequest) {
     // before any other processing, following the pattern from Antigravity-Manager.
     const messages = cleanCacheControl(anthropicRequest.messages || []);
 
-    const { system, max_tokens, temperature, top_p, top_k, stop_sequences, tools, tool_choice, thinking } = anthropicRequest;
+    const { system, max_tokens, temperature, top_p, top_k, stop_sequences, tools, tool_choice, thinking, disable_thinking } = anthropicRequest;
     const modelName = anthropicRequest.model || '';
     const modelFamily = getModelFamily(modelName);
     const isClaudeModel = modelFamily === 'claude';
     const isGeminiModel = modelFamily === 'gemini';
-    const isThinking = isThinkingModel(modelName);
+    const isThinking = isThinkingModel(modelName) && disable_thinking !== true && thinking?.type !== 'disabled';
 
     const googleRequest = {
         contents: [],
