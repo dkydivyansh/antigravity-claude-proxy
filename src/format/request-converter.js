@@ -272,8 +272,8 @@ export function convertAnthropicToGoogle(anthropicRequest) {
     if (!googleRequest.tools) {
         googleRequest.tools = [];
     }
-    googleRequest.tools.push({ googleSearch: {} });
-    googleRequest.tools.push({ urlContext: {} });
+    // googleRequest.tools.push({ googleSearch: {} });
+    // googleRequest.tools.push({ urlContext: {} });
 
     // Cap max tokens for Gemini models
     if (isGeminiModel && googleRequest.generationConfig.maxOutputTokens > GEMINI_MAX_OUTPUT_TOKENS) {
