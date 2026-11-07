@@ -10,7 +10,7 @@ import { readFile, writeFile, mkdir, access, rename } from 'fs/promises';
 import { constants as fsConstants } from 'fs';
 import { dirname } from 'path';
 import { ACCOUNT_CONFIG_PATH } from '../constants.js';
-import { getAuthStatus } from '../auth/database.js';
+import { getAuthStatus, isDatabaseAccessible } from '../auth/database.js';
 import { logger } from '../utils/logger.js';
 import { remoteLoadAccounts, remoteSaveAccounts } from './remote-storage.js';
 
@@ -91,6 +91,10 @@ export async function loadAccounts(configPath = ACCOUNT_CONFIG_PATH) {
  */
 export function loadDefaultAccount(dbPath) {
     try {
+        if (!isDatabaseAccessible(dbPath)) {
+            logger.debug('[AccountManager] Antigravity database not accessible (cloud/headless mode)');
+            return { accounts: [], tokenCache: new Map() };
+        }
         const authData = getAuthStatus(dbPath);
         if (authData?.apiKey) {
             const account = {
