@@ -51,16 +51,25 @@ export function convertAnthropicToGoogle(anthropicRequest) {
     // before any other processing, following the pattern from Antigravity-Manager.
     const messages = cleanCacheControl(anthropicRequest.messages || []);
 
-    const { system, max_tokens, temperature, top_p, top_k, stop_sequences, tools, tool_choice, thinking } = anthropicRequest;
+    const { system, max_tokens, temperature, top_p, top_k, stop_sequences, tools, tool_choice, thinking, disable_thinking } = anthropicRequest;
     const modelName = anthropicRequest.model || '';
     const modelFamily = getModelFamily(modelName);
     const isClaudeModel = modelFamily === 'claude';
     const isGeminiModel = modelFamily === 'gemini';
-    const isThinking = isThinkingModel(modelName);
+    // disable_thinking: custom flag — set true in request body to suppress thinking even on thinking models
+    const isThinking = isThinkingModel(modelName) && disable_thinking !== true && thinking?.type !== 'disabled';
 
     const googleRequest = {
         contents: [],
-        generationConfig: {}
+        generationConfig: {},
+        // Disable all safety filters — Cloud Code API routes for coding/agentic use;
+        // safety blocks would silently truncate or reject legitimate code-generation responses.
+        safetySettings: [
+            { category: 'HARM_CATEGORY_HARASSMENT',        threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_HATE_SPEECH',       threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' },
+        ]
     };
 
     // Handle system instruction
