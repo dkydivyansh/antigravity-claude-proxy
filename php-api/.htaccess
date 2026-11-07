@@ -1,0 +1,9 @@
+# Protect the .env file and SQLite database from direct HTTP access
+<FilesMatch "(\.env|\.sqlite|\.db)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Optional: allow pretty URLs if your PHP server supports mod_rewrite
+# (not needed for this single-file API)
+

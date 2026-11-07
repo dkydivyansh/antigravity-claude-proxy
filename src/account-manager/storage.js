@@ -2,6 +2,8 @@
  * Account Storage
  *
  * Handles loading and saving account configuration to disk.
+ * When REMOTE_STORAGE_URL is set, delegates to the PHP remote API instead
+ * of the local filesystem (required for stateless deployments like Render).
  */
 
 import { readFile, writeFile, mkdir, access, rename } from 'fs/promises';
@@ -10,16 +12,31 @@ import { dirname } from 'path';
 import { ACCOUNT_CONFIG_PATH } from '../constants.js';
 import { getAuthStatus } from '../auth/database.js';
 import { logger } from '../utils/logger.js';
+import { remoteLoadAccounts, remoteSaveAccounts } from './remote-storage.js';
+
+/** True when a remote PHP storage backend is configured */
+const USE_REMOTE_STORAGE = Boolean(process.env.REMOTE_STORAGE_URL);
 
 let writeLock = null;
 
 /**
- * Load accounts from the config file
+ * Load accounts from the config file (or remote PHP API when configured)
  *
- * @param {string} configPath - Path to the config file
+ * @param {string} configPath - Path to the config file (ignored when remote)
  * @returns {Promise<{accounts: Array, settings: Object, activeIndex: number}>}
  */
 export async function loadAccounts(configPath = ACCOUNT_CONFIG_PATH) {
+    // ── Remote mode ──────────────────────────────────────────────────────────
+    if (USE_REMOTE_STORAGE) {
+        try {
+            return await remoteLoadAccounts();
+        } catch (error) {
+            logger.error(`[AccountManager] Remote load failed, falling back to local: ${error.message}`);
+            // Fall through to local file load below
+        }
+    }
+
+    // ── Local file mode ───────────────────────────────────────────────────────
     try {
         // Check if config file exists using async access
         await access(configPath, fsConstants.F_OK);
@@ -101,14 +118,22 @@ export function loadDefaultAccount(dbPath) {
 }
 
 /**
- * Save account configuration to disk
+ * Save account configuration to disk (or remote PHP API when configured)
  *
- * @param {string} configPath - Path to the config file
- * @param {Array} accounts - Array of account objects
- * @param {Object} settings - Settings object
- * @param {number} activeIndex - Current active account index
+ * @param {string} configPath - Path to the config file (ignored when remote)
+ * @param {Array}  accounts
+ * @param {Object} settings
+ * @param {number} activeIndex
  */
 export async function saveAccounts(configPath, accounts, settings, activeIndex) {
+    // ── Remote mode ──────────────────────────────────────────────────────────
+    if (USE_REMOTE_STORAGE) {
+        // remoteSaveAccounts is fire-and-forget with internal error logging
+        await remoteSaveAccounts(accounts, settings, activeIndex);
+        return;
+    }
+
+    // ── Local file mode ───────────────────────────────────────────────────────
     // Serialize writes to prevent concurrent corruption
     const previousLock = writeLock;
     let resolve;

@@ -64,6 +64,15 @@ export async function* streamSSEResponse(response, originalModel) {
                 const content = firstCandidate.content || {};
                 const parts = content.parts || [];
 
+                // Detect version-gate deprecation response (200 OK with deprecation text)
+                // The API returns this when X-Client-Version is below the minimum required
+                if (!hasEmittedStart && parts.length > 0) {
+                    const firstPartText = parts[0]?.text || '';
+                    if (firstPartText.includes('no longer supported') || firstPartText.includes('download and install the latest version')) {
+                        throw new Error('invalid_request_error: Antigravity client version is no longer supported by the API. Set ANTIGRAVITY_CLIENT_VERSION env var to a newer version or update Antigravity IDE.');
+                    }
+                }
+
                 // Emit message_start on first data
                 // Note: input_tokens = promptTokenCount - cachedContentTokenCount (Antigravity includes cached in total)
                 if (!hasEmittedStart && parts.length > 0) {
