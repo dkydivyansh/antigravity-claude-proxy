@@ -23,7 +23,7 @@ const FALLBACK_USER_AGENT_VERSION = process.env.FALLBACK_ANTIGRAVITY_VERSION || 
 
 // Fallback for X-Client-Version (top-level "version" in product.json)
 // Can be overridden via ANTIGRAVITY_CLIENT_VERSION_FALLBACK env var
-const FALLBACK_CLIENT_VERSION = process.env.ANTIGRAVITY_CLIENT_VERSION_FALLBACK || '1.110.0';
+const FALLBACK_CLIENT_VERSION = process.env.ANTIGRAVITY_CLIENT_VERSION_FALLBACK || '1.120.0';
 
 let cachedUserAgent = null;
 let cachedClientVersion = null;
@@ -62,8 +62,10 @@ function getProductJsonPaths() {
         const programFiles = process.env.ProgramFiles || 'C:\\Program Files';
         if (localAppData) {
             paths.push(join(localAppData, 'Programs', 'Antigravity', 'resources', 'app', 'product.json'));
+            paths.push(join(localAppData, 'Programs', 'Antigravity IDE', 'resources', 'app', 'product.json'));
         }
         paths.push(join(programFiles, 'Antigravity', 'resources', 'app', 'product.json'));
+        paths.push(join(programFiles, 'Antigravity IDE', 'resources', 'app', 'product.json'));
     } else {
         paths.push('/usr/share/antigravity/resources/app/product.json');
         paths.push('/opt/antigravity/resources/app/product.json');
@@ -226,7 +228,9 @@ function getVersionWindows() {
 
         const possiblePaths = [
             join(localAppData, 'Programs', 'Antigravity', 'Antigravity.exe'),
-            join(programFiles, 'Antigravity', 'Antigravity.exe')
+            join(localAppData, 'Programs', 'Antigravity IDE', 'Antigravity IDE.exe'),
+            join(programFiles, 'Antigravity', 'Antigravity.exe'),
+            join(programFiles, 'Antigravity IDE', 'Antigravity IDE.exe')
         ];
 
         for (const exePath of possiblePaths) {
