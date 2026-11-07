@@ -329,16 +329,6 @@ export async function sendMessage(anthropicRequest, accountManager, fallbackEnab
                     // Non-thinking models use regular JSON
                     const data = await response.json();
                     logger.debug('[CloudCode] Response received');
-
-                    // Detect version-gate deprecation response from API backend
-                    // The API returns a 200 OK with a deprecation message when X-Client-Version is too old
-                    const firstText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                    if (firstText.includes('no longer supported') || firstText.includes('download and install the latest version')) {
-                        const clientVersion = (await import('../utils/version-detector.js')).getClientVersion();
-                        logger.error(`[CloudCode] Version gate hit: API rejected X-Client-Version=${clientVersion}. Bump ANTIGRAVITY_CLIENT_VERSION env var or update Antigravity IDE.`);
-                        throw new Error(`invalid_request_error: Antigravity client version ${clientVersion} is no longer supported. Set ANTIGRAVITY_CLIENT_VERSION env var to a newer version.`);
-                    }
-
                     // Clear rate limit state on success
                     clearRateLimitState(account.email, model);
                     accountManager.notifySuccess(account, model);

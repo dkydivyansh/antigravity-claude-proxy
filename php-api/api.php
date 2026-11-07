@@ -179,12 +179,12 @@ if ($action === 'load' && $_SERVER['REQUEST_METHOD'] === 'GET') {
             ]);
         }
 
-        $data = json_decode($raw, true);
-        if ($data === null) {
-            json_response(500, ['error' => 'Corrupted JSON data in database']);
-        }
-
-        json_response(200, $data);
+        // Return the exact raw JSON from the database
+        // Avoids lossy decode/encode cycle that converts empty objects {} to []
+        http_response_code(200);
+        header('Content-Type: application/json; charset=utf-8');
+        echo $raw;
+        exit;
     } catch (Throwable $e) {
         json_response(500, ['error' => $e->getMessage()]);
     }
